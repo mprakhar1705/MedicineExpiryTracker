@@ -1,26 +1,25 @@
+
 'use strict'
 const functions = require('firebase-functions');
-const DialogflowApp = require('actions-on-google').DialogflowApp;
+const {dialogflow,SimpleResponse} = require('actions-on-google');
 const admin = require('firebase-admin');
-//const app = dialogflow({debug: true});
+var HashMap = require('hashmap');
+const app = dialogflow({debug: true});
 admin.initializeApp(functions.config().firebase);
-
-
-exports.medicineExpiryTracker= functions.https.onRequest( (request,response) => {
-    const  app = new DialogflowApp({request: request, response: response});
-   
-const db = admin.firestore();
-var data = [];
-
-app.intent('Default Welcome Intent',(conv) =>{
-
-    conv.ask('Welcome to Medicine Expiry Tracker. I can help you to track Medicines and their Expiry Date. Following commands are available: Add medicine , Delete Medicine, Get expiry Date for the Medicine, List all medicine. What would you like me to do?');    
+ const db = admin.firestore();
+ app.intent('Default Welcome Intent',(conv) =>{
+     conv.ask(new SimpleResponse({
+        speech: 'Welcome to Medicine Expiry Tracker. I can help you to track Medicines and their Expiry Date. Following commands are available: Add medicine , Delete Medicine, Get expiry Date for the Medicine, List all medicine. What would you like me to do?',
+        text: 'Welcome to Medicine Expiry Tracker. I can help you to track Medicines and their Expiry Date. Following commands are available: Add medicine , Delete Medicine, Get expiry Date for the Medicine, List all medicine. What would you like me to do?',
+      }));    
 });
 app.intent('addMedicine',(conv,{medName,date}) =>{
-
-    const userId = app.getUser().userId;
-    data.push([medName,date]);
-    return db.collection("medicineTable").doc(userId).set(data)
+    const userId = conv.user.storage.userId;
+    var data = new HashMap();
+    data.set("UserId",userId);
+    data.set("medicineName",medName);
+    data.set("expiryDate",date);
+    return db.collection("medicineTable").doc("medicineDoc").set(data)
     .then(function() {
         console.log("Document successfully written!");
         conv.ask(new SimpleResponse({
@@ -32,6 +31,4 @@ app.intent('addMedicine',(conv,{medName,date}) =>{
         console.error("Error writing document: ", error);
     });
 });
-
-//exports.medicineExpiryTracker= functions.https.onRequest(app);
-});
+ exports.medicineExpiryTracker= functions.https.onRequest(app);
