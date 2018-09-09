@@ -1,9 +1,9 @@
-
 'use strict'
 const functions = require('firebase-functions');
 const {dialogflow,SimpleResponse} = require('actions-on-google');
 const admin = require('firebase-admin');
-var HashMap = require('hashmap');
+const uuidv4 = require('uuid/v4');
+
 const app = dialogflow({debug: true});
 admin.initializeApp(functions.config().firebase);
  const db = admin.firestore();
@@ -14,11 +14,20 @@ admin.initializeApp(functions.config().firebase);
       }));    
 });
 app.intent('addMedicine',(conv,{medName,date}) =>{
-    const userId = conv.user.storage.userId;
-    var data = new HashMap();
-    data.set("UserId",userId);
-    data.set("medicineName",medName);
-    data.set("expiryDate",date);
+ 
+    let userId;
+if (userId in conv.user.storage) {
+  userId = conv.user.storage.userId;
+} else {
+  userId = uuidv4();
+  conv.user.storage.userId = userId;
+}   
+    var data = {
+        userID:userId,
+        medicineName: medName,
+        expiryDate: date
+      };
+      conv.close(`MedicineName is ${medName} expiry is ${date} userid is ${userId}`);
     return db.collection("medicineTable").doc("medicineDoc").set(data)
     .then(function() {
         console.log("Document successfully written!");
