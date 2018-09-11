@@ -14,21 +14,17 @@ admin.initializeApp(functions.config().firebase);
       }));    
 });
 app.intent('addMedicine',(conv,{medName,date}) =>{
- 
+    
     let userId;
-if (userId in conv.user.storage) {
+if ("userId" in conv.user.storage) {
   userId = conv.user.storage.userId;
 } else {
   userId = uuidv4();
   conv.user.storage.userId = userId;
 }   
-    var data = {
-        userID:userId,
-        medicineName: medName,
-        expiryDate: date
-      };
-      conv.close(`MedicineName is ${medName} expiry is ${date} userid is ${userId}`);
-    return db.collection("medicineTable").doc("medicineDoc").set(data)
+
+          
+    return db.collection(userId).doc(medName).set({expiryDate: date})
     .then(function() {
         console.log("Document successfully written!");
         conv.ask(new SimpleResponse({
