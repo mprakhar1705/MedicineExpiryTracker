@@ -3,9 +3,13 @@ const functions = require('firebase-functions');
 const {dialogflow,SimpleResponse} = require('actions-on-google');
 const admin = require('firebase-admin');
 const uuidv4 = require('uuid/v4');
+admin.initializeApp(functions.config().firebase);
+const firestore = admin.firestore();
+const settings = {timestampsInSnapshots: true};
+firestore.settings(settings);
 
 const app = dialogflow({debug: true});
-admin.initializeApp(functions.config().firebase);
+
  const db = admin.firestore();
  app.intent('Default Welcome Intent',(conv) =>{
      conv.ask(new SimpleResponse({
@@ -45,8 +49,8 @@ app.intent('getExpiryDate',(conv,{medName}) =>{
 
     return docRef.get()
     .then((snapshot) => {
-        const {edate} = snapshot.data();
-        //conv.ask(`user id is ${userId} medname is ${medName} date is ${edate}`);
+        const timestamp = snapshot.get('expiryDate');
+        const edate = new Date(timestamp);
         conv.ask(`Expiry date of ${medName} is ${edate}`);
     }).catch((error) => {
         console.log('error:',error);
