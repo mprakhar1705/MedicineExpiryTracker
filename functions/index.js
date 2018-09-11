@@ -26,7 +26,7 @@ if ("userId" in conv.user.storage) {
           
     return db.collection(userId).doc(medName).set({expiryDate: date})
     .then(function() {
-        console.log("Document successfully written!");
+        console.log("Medicine Added!");
         conv.ask(new SimpleResponse({
             speech: `Medicine ${medName} added!`,
             text: `Medicine ${medName} added!`,
@@ -36,4 +36,23 @@ if ("userId" in conv.user.storage) {
         console.error("Error writing document: ", error);
     });
 });
+
+app.intent('getExpiryDate',(conv,{medName}) =>{
+
+    let userId = conv.user.storage.userId;
+    const collectionRef = db.collection(userId);
+    const docRef = collectionRef.doc(`${medName}`);
+
+    return docRef.get()
+    .then((snapshot) => {
+        const {edate} = snapshot.data();
+        //conv.ask(`user id is ${userId} medname is ${medName} date is ${edate}`);
+        conv.ask(`Expiry date of ${medName} is ${edate}`);
+    }).catch((error) => {
+        console.log('error:',error);
+        conv.close('Medicine not found!');
+    });
+
+});
+
  exports.medicineExpiryTracker= functions.https.onRequest(app);
