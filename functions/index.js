@@ -85,4 +85,25 @@ app.intent('deleteMedicine',(conv,{medName}) =>{
     
 });
 
+app.intent('listAllMedicines',(conv) =>{
+    
+    let output =`Following medicines were found `;
+    let userId = conv.user.storage.userId;
+    const collectionRef = db.collection(userId);
+
+    return collectionRef.get()
+    .then(snapshot => {
+        snapshot.forEach(doc =>{
+             output += ` ${doc.id} `;
+            
+            console.log(doc.id, '=>', doc.data());
+        });
+        conv.ask(output);
+    })
+    .catch(error =>{
+        console.log("Error getting Document",err);
+    })   
+
+});
+
  exports.medicineExpiryTracker= functions.https.onRequest(app);
