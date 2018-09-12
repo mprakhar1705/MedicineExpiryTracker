@@ -59,4 +59,30 @@ app.intent('getExpiryDate',(conv,{medName}) =>{
 
 });
 
+app.intent('deleteMedicine',(conv,{medName}) =>{
+
+    let userId = conv.user.storage.userId;
+    var docRef = db.collection(userId).doc(`${medName}`);
+
+    return docRef.get()
+    .then(doc => {
+        if (!doc.exists) {
+            console.log('No such document!');
+            conv.ask('Medicine not found!');
+        } else {
+            return docRef.delete().then(function() {
+                console.log("Document successfully deleted!");
+                conv.ask('Medicine deleted!');
+            }).catch(function(error) {
+                console.error("Error removing document: ", error);
+            });          
+        }
+    })
+    .catch(err => {
+        console.log('Error getting document', err);
+    });
+    
+    
+});
+
  exports.medicineExpiryTracker= functions.https.onRequest(app);
