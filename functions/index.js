@@ -35,10 +35,12 @@ if ("userId" in conv.user.storage) {
             speech: `Medicine ${medName} added!`,
             text: `Medicine ${medName} added!`,
           }));
+          conv.ask(" .What would you like to do next? ");
     })
     .catch(function(error) {
         console.error("Error writing document: ", error);
     });
+    
 });
 
 app.intent('getExpiryDate',(conv,{medName}) =>{
@@ -48,14 +50,28 @@ app.intent('getExpiryDate',(conv,{medName}) =>{
     const docRef = collectionRef.doc(`${medName}`);
 
     return docRef.get()
-    .then((snapshot) => {
-        const timestamp = snapshot.get('expiryDate');
-        const edate = new Date(timestamp);
-        conv.ask(`Expiry date of ${medName} is ${edate}`);
-    }).catch((error) => {
-        console.log('error:',error);
-        conv.close('Medicine not found!');
-    });
+    .then(doc =>{
+        if(!doc.exists){
+            console.log('No such document!');
+            conv.ask('Medicine not found! What would you like to do next?');
+            }
+
+        else{
+           return docRef.get()
+            .then((snapshot) => {
+                const timestamp = snapshot.get('expiryDate');
+                const edate = new Date(timestamp);
+                conv.ask(`Expiry date of ${medName} is ${edate}`);
+                conv.ask(" .What would you like to do next? ");
+        
+            }).catch((error) => {
+                console.log('error:',error);
+                conv.close('Medicine not found!');
+            });
+        }
+    })
+    
+    
 
 });
 
@@ -68,11 +84,13 @@ app.intent('deleteMedicine',(conv,{medName}) =>{
     .then(doc => {
         if (!doc.exists) {
             console.log('No such document!');
-            conv.ask('Medicine not found!');
+            conv.ask('Medicine not found! What would you like to do next?');
         } else {
             return docRef.delete().then(function() {
                 console.log("Document successfully deleted!");
                 conv.ask('Medicine deleted!');
+                conv.ask(" .What would you like to do next? ");
+
             }).catch(function(error) {
                 console.error("Error removing document: ", error);
             });          
@@ -87,7 +105,7 @@ app.intent('deleteMedicine',(conv,{medName}) =>{
 
 app.intent('listAllMedicines',(conv) =>{
     
-    let output =`Following medicines were found `;
+    let output =`Following medicines were found: `;
     let userId = conv.user.storage.userId;
     const collectionRef = db.collection(userId);
 
@@ -99,6 +117,8 @@ app.intent('listAllMedicines',(conv) =>{
             console.log(doc.id, '=>', doc.data());
         });
         conv.ask(output);
+        conv.ask(" .What would you like to do next? ");
+
     })
     .catch(error =>{
         console.log("Error getting Document",err);
